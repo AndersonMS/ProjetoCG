@@ -1,4 +1,4 @@
-package mygame;
+package packageSpaceRunner;
 
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.TextureKey;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Jogo extends SimpleApplication implements AnalogListener {
+public class SpaceRunner extends SimpleApplication implements AnalogListener {
 
     private BitmapFont defaultFont;
     private boolean START;
@@ -36,7 +36,7 @@ public class Jogo extends SimpleApplication implements AnalogListener {
     private final float fpsRate = 1000f / 1f;
 
     public static void main(String[] args) {
-        Jogo app = new Jogo();
+        SpaceRunner app = new SpaceRunner();
         app.start();
     }
 

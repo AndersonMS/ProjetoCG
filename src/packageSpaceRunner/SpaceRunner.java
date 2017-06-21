@@ -19,8 +19,11 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 public class SpaceRunner extends SimpleApplication implements AnalogListener {
 
@@ -32,17 +35,19 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
     private ArrayList<Geometry> cubeField;
     private ArrayList<ColorRGBA> obstacleColors;
     private float speed, coreTime, coreTime2, camAngle = 0;
-    private BitmapText fpsScoreText, pressStart, nameGame;
+    private BitmapText fpsScoreText, pressStart, nameGame, scoreText;
     private final float fpsRate = 1000f / 1f;
+    private static String nome;
+    private Map<String, Integer> map = new HashMap<String, Integer>();
 
     public static void main(String[] args) {
         SpaceRunner app = new SpaceRunner();
         app.start();
+        app.setDisplayFps(false);
     }
 
     @Override
     public void simpleInitApp() {
-
         createLigth();
 
         Logger.getLogger("com.jme3").setLevel(Level.WARNING);
@@ -56,6 +61,7 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
         pressStart = new BitmapText(defaultFont, false);
         fpsScoreText = new BitmapText(defaultFont, false);
         nameGame = new BitmapText(defaultFont, false);
+        scoreText = new BitmapText(defaultFont, false);
 
         loadText(fpsScoreText, "Pontos atuais: 0", defaultFont, 0, 50, 0);
         guiNode.detachChild(fpsScoreText);
@@ -160,7 +166,6 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
 
     private void gameLost() {
         START = false;
-        loadText(pressStart, "Você perdeu! Aperte ENTER para jogar de novo.", defaultFont, 0, 5, 0);
         gameReset();
     }
 
@@ -198,6 +203,11 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
                 BoundingVolume vVol = cubeModel.getWorldBound();
 
                 if (pVol.intersects(vVol)) {
+                    map.put(nome, Score);
+                    guiNode.detachChild(fpsScoreText);
+                    loadText(scoreText, nome + " sua pontuacao foi " + Score + "!\n\n"
+                            + "Menu Principal (Pressione X)", defaultFont, 200, 360, 0);
+                    loadText(nameGame, "Space Runner", defaultFont, 200, 470, 0, 40);
                     gameLost();
                     return;
                 }
@@ -230,20 +240,24 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
         inputManager.addMapping("Medio", new KeyTrigger(KeyInput.KEY_2));
         inputManager.addMapping("Dificil", new KeyTrigger(KeyInput.KEY_3));
         inputManager.addMapping("StartGame", new KeyTrigger(KeyInput.KEY_B));
+        inputManager.addMapping("MenuPrincipal", new KeyTrigger(KeyInput.KEY_X));
         inputManager.addListener(this, "START", "Left", "Right", "ESPACE", "Reiniciar", "Ajuda", "Voltar", "Sobre", "Opcoes",
-                "Som", "Dificuldade", "Ligado", "Desligado", "Facil", "Medio", "Dificil", "StartGame");
+                "Som", "Dificuldade", "Ligado", "Desligado", "Facil", "Medio", "Dificil", "StartGame", "MenuPrincipal");
     }
 
     public void onAnalog(String binding, float value, float tpf) {
         if (binding.equals("START") && !START) {
             START = true;
             guiNode.detachChild(pressStart);
+            guiNode.detachChild(scoreText);
             guiNode.attachChild(fpsScoreText);
         } else if (!START && binding.equals("StartGame")) {
+            nome = JOptionPane.showInputDialog("Qual o seu nome?");
             START = true;
+            guiNode.detachChild(nameGame);
             guiNode.detachChild(pressStart);
             guiNode.attachChild(fpsScoreText);
-            if(!setDificuldade){
+            if (!setDificuldade) {
                 highCap = 30;
                 lowCap = 10;
             }
@@ -254,66 +268,71 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
         } else if (START && binding.equals("Right")) {
             player.move(0, 0, (speed / 2f) * value * fpsRate);
             camAngle += value * tpf;
-        } else if(START && binding.equals("ESPACE")) {
+        } else if (START && binding.equals("ESPACE")) {
             START = false;
             loadText(pressStart, "Voltar ao jogo (Pressione ENTER)\nReiniciar (Pressione R)\nSair (Pressione ESC)", defaultFont, 200, 170, 0);
-        } else if(!START && binding.equals("Reiniciar")) {
+        } else if (!START && binding.equals("Reiniciar")) {
             START = true;
             guiNode.detachChild(pressStart);
             gameReset();
-        } else if(!START && binding.equals("Ajuda")) {
+        } else if (!START && binding.equals("Ajuda")) {
             loadText(pressStart, "Utilize as teclas de direcao abaixo do DELETE para movimentar a nave.\n"
                     + "Durante o jogo pressione ESPACE para pausar.\n"
                     + "Voltar (Pressione V)", defaultFont, 80, 170, 0);
-        } else if(!START && binding.equals("Voltar")) {
+        } else if (!START && binding.equals("Voltar")) {
             createMenu();
-        } else if(!START && binding.equals("Sobre")) {
+        } else if (!START && binding.equals("Sobre")) {
             loadText(pressStart, "Desenvolvido por: Joao Marcos Figueira (141018)\n"
                     + "\t\t        Anderson Martins da Silva (140513)\n"
                     + "Git: https://github.com/AndersonMS/ProjetoCG\n"
                     + "Voltar (Pressione V)", defaultFont, 120, 170, 0);
-        } else if(!START && binding.equals("Opcoes")) {
+        } else if (!START && binding.equals("Opcoes")) {
             loadText(pressStart, "Som (Pressione F)\n"
                     + "Dificuldade (Pressione D)\n"
                     + "Voltar (Pressione V)", defaultFont, 230, 170, 0);
-        } else if(!START && binding.equals("Som")) {
+        } else if (!START && binding.equals("Som")) {
             loadText(pressStart, "Ligado (Pressione L)\n"
                     + "Desligado (Pressione K)", defaultFont, 230, 170, 0);
-        } else if(!START && binding.equals("Dificuldade")) {
+        } else if (!START && binding.equals("Dificuldade")) {
             loadText(pressStart, "Facil (Pressione 1)\n"
                     + "Medio (Pressione 2)\n"
                     + "Dificil (Pressione 3)", defaultFont, 250, 170, 0);
-        } else if(!START && binding.equals("Ligado")) {
+        } else if (!START && binding.equals("Ligado")) {
             som = true;
             loadText(pressStart, "Som (Pressione F)\n"
                     + "Dificuldade (Pressione D)\n"
                     + "Voltar (Pressione V)", defaultFont, 230, 170, 0);
-        } else if(!START && binding.equals("Desligado")) {
-            som  = false;
+        } else if (!START && binding.equals("Desligado")) {
+            som = false;
             loadText(pressStart, "Som (Pressione F)\n"
                     + "Dificuldade (Pressione D)\n"
                     + "Voltar (Pressione V)", defaultFont, 230, 170, 0);
-        } else if(!START && binding.equals("Facil")) {
+        } else if (!START && binding.equals("Facil")) {
             setDificuldade = true;
             highCap = 30;
             lowCap = 10;
             loadText(pressStart, "Som (Pressione F)\n"
                     + "Dificuldade (Pressione D)\n"
                     + "Voltar (Pressione V)", defaultFont, 230, 170, 0);
-        } else if(!START && binding.equals("Medio")) {
+        } else if (!START && binding.equals("Medio")) {
             setDificuldade = true;
             highCap = 50;
             lowCap = 20;
             loadText(pressStart, "Som (Pressione F)\n"
                     + "Dificuldade (Pressione D)\n"
                     + "Voltar (Pressione V)", defaultFont, 230, 170, 0);
-        } else if(!START && binding.equals("Dificil")) {
+        } else if (!START && binding.equals("Dificil")) {
             setDificuldade = true;
             highCap = 50;
             lowCap = 30;
             loadText(pressStart, "Som (Pressione F)\n"
                     + "Dificuldade (Pressione D)\n"
                     + "Voltar (Pressione V)", defaultFont, 230, 170, 0);
+        } else if (!START && binding.equals("MenuPrincipal")) {
+            guiNode.detachChild(scoreText);
+            guiNode.detachChild(fpsScoreText);
+
+            createMenu();
         }
     }
 
@@ -323,7 +342,7 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
         txt.setText(text);
         guiNode.attachChild(txt);
     }
-    
+
     private void loadText(BitmapText txt, String text, BitmapFont font, float x, float y, float z, float tam) {
         txt.setSize(tam);
         txt.setLocalTranslation(x, y, z);

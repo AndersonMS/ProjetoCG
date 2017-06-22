@@ -20,11 +20,8 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -261,6 +258,7 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
                 "Som", "Dificuldade", "Ligado", "Desligado", "Facil", "Medio", "Dificil", "StartGame", "MenuPrincipal", "Melhores");
     }
 
+    @Override
     public void onAnalog(String binding, float value, float tpf) {
         if (binding.equals("START") && !START) {
             START = true;
@@ -370,14 +368,14 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
 
     private void loadText(BitmapText txt, String text, BitmapFont font, float x, float y, float z) {
         txt.setSize(font.getCharSet().getRenderedSize());
-        txt.setLocalTranslation(x, y, z);
+        txt.setLocalTranslation(0, y, z);
         txt.setText(text);
         guiNode.attachChild(txt);
     }
 
     private void loadText(BitmapText txt, String text, BitmapFont font, float x, float y, float z, float tam) {
         txt.setSize(tam);
-        txt.setLocalTranslation(x, y, z);
+        txt.setLocalTranslation(0, y, z);
         txt.setText(text);
         guiNode.attachChild(txt);
     }
@@ -406,12 +404,12 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
     }
 
     private void createMenu() {
-        loadText(nameGame, "Space Runner", defaultFont, 200, 400, 0, 40);
+        loadText(nameGame, "Space Runner", defaultFont, 0, 400, 0, 40);
         loadText(pressStart, "Novo Jogo (Pressione B)\n"
                 + "Melhores (Pressione M)\n"
                 + "Opcoes (Pressione O)\n"
                 + "Ajuda (Pressione A)\n"
                 + "Sobre (Pressione S)\n"
-                + "Sair (Pressione ESC)", defaultFont, 230, 170, 0);
-    }
-}
+                + "Sair (Pressione ESC)", defaultFont, 0, 170, 0);
+}    }
+

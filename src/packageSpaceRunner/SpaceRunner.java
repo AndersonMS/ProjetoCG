@@ -2,6 +2,7 @@ package packageSpaceRunner;
 
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.TextureKey;
+import com.jme3.audio.AudioNode;
 import com.jme3.bounding.BoundingVolume;
 import com.jme3.font.BitmapFont;
 import com.jme3.font.BitmapText;
@@ -19,8 +20,14 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -28,7 +35,7 @@ import javax.swing.JOptionPane;
 public class SpaceRunner extends SimpleApplication implements AnalogListener {
 
     private BitmapFont defaultFont;
-    private boolean START, som, setDificuldade = false;
+    private boolean START, setDificuldade = false;
     private int difficulty, Score, colorInt, highCap, lowCap, diffHelp;
     private Node player;
     private Geometry CubeOld;
@@ -38,7 +45,8 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
     private BitmapText fpsScoreText, pressStart, nameGame, scoreText;
     private final float fpsRate = 1000f / 1f;
     private static String nome;
-    private Map<String, Integer> map = new HashMap<String, Integer>();
+    private SortedMap<Integer, String> map = new TreeMap<Integer, String>(Collections.reverseOrder());
+    private AudioNode audio;
 
     public static void main(String[] args) {
         SpaceRunner app = new SpaceRunner();
@@ -48,6 +56,8 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
 
     @Override
     public void simpleInitApp() {
+        this.audio = new AudioNode(assetManager, "Audio/AudioJogo.ogg", false);
+        
         createLigth();
 
         Logger.getLogger("com.jme3").setLevel(Level.WARNING);
@@ -69,8 +79,13 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
 
         player = createPlayer();
         rootNode.attachChild(player);
+        rootNode.attachChild(audio);
         cubeField = new ArrayList<>();
         obstacleColors = new ArrayList<>();
+        audio.setLooping(true);
+        audio.setVolume(0.5f);
+        audio.setPositional(false);
+        audio.play();
     }
 
     private void gameReset() {
@@ -165,6 +180,11 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
     }
 
     private void gameLost() {
+        map.put(Score, nome);
+        guiNode.detachChild(fpsScoreText);
+        loadText(scoreText, nome + " sua pontuacao foi " + Score + "!\n\n"
+                + "Menu Principal (Pressione X)", defaultFont, 200, 360, 0);
+        loadText(nameGame, "Space Runner", defaultFont, 200, 485, 0, 40);
         START = false;
         gameReset();
     }
@@ -203,11 +223,6 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
                 BoundingVolume vVol = cubeModel.getWorldBound();
 
                 if (pVol.intersects(vVol)) {
-                    map.put(nome, Score);
-                    guiNode.detachChild(fpsScoreText);
-                    loadText(scoreText, nome + " sua pontuacao foi " + Score + "!\n\n"
-                            + "Menu Principal (Pressione X)", defaultFont, 200, 360, 0);
-                    loadText(nameGame, "Space Runner", defaultFont, 200, 470, 0, 40);
                     gameLost();
                     return;
                 }
@@ -241,8 +256,9 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
         inputManager.addMapping("Dificil", new KeyTrigger(KeyInput.KEY_3));
         inputManager.addMapping("StartGame", new KeyTrigger(KeyInput.KEY_B));
         inputManager.addMapping("MenuPrincipal", new KeyTrigger(KeyInput.KEY_X));
+        inputManager.addMapping("Melhores", new KeyTrigger(KeyInput.KEY_M));
         inputManager.addListener(this, "START", "Left", "Right", "ESPACE", "Reiniciar", "Ajuda", "Voltar", "Sobre", "Opcoes",
-                "Som", "Dificuldade", "Ligado", "Desligado", "Facil", "Medio", "Dificil", "StartGame", "MenuPrincipal");
+                "Som", "Dificuldade", "Ligado", "Desligado", "Facil", "Medio", "Dificil", "StartGame", "MenuPrincipal", "Melhores");
     }
 
     public void onAnalog(String binding, float value, float tpf) {
@@ -251,17 +267,6 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
             guiNode.detachChild(pressStart);
             guiNode.detachChild(scoreText);
             guiNode.attachChild(fpsScoreText);
-        } else if (!START && binding.equals("StartGame")) {
-            nome = JOptionPane.showInputDialog("Qual o seu nome?");
-            START = true;
-            guiNode.detachChild(nameGame);
-            guiNode.detachChild(pressStart);
-            guiNode.attachChild(fpsScoreText);
-            if (!setDificuldade) {
-                highCap = 30;
-                lowCap = 10;
-            }
-            gameReset();
         } else if (START && binding.equals("Left")) {
             player.move(0, 0, -(speed / 2f) * value * fpsRate);
             camAngle -= value * tpf;
@@ -298,12 +303,12 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
                     + "Medio (Pressione 2)\n"
                     + "Dificil (Pressione 3)", defaultFont, 250, 170, 0);
         } else if (!START && binding.equals("Ligado")) {
-            som = true;
+            audio.setVolume(0.5f);
             loadText(pressStart, "Som (Pressione F)\n"
                     + "Dificuldade (Pressione D)\n"
                     + "Voltar (Pressione V)", defaultFont, 230, 170, 0);
         } else if (!START && binding.equals("Desligado")) {
-            som = false;
+            audio.setVolume(0f);
             loadText(pressStart, "Som (Pressione F)\n"
                     + "Dificuldade (Pressione D)\n"
                     + "Voltar (Pressione V)", defaultFont, 230, 170, 0);
@@ -331,8 +336,35 @@ public class SpaceRunner extends SimpleApplication implements AnalogListener {
         } else if (!START && binding.equals("MenuPrincipal")) {
             guiNode.detachChild(scoreText);
             guiNode.detachChild(fpsScoreText);
-
+            gameReset();
             createMenu();
+        } else if (!START && binding.equals("StartGame")) {
+            try {
+                Thread.sleep((long) 500);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(SpaceRunner.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            nome = JOptionPane.showInputDialog("Qual o seu nome?");
+            START = true;
+            guiNode.detachChild(nameGame);
+            guiNode.detachChild(pressStart);
+            guiNode.attachChild(fpsScoreText);
+            if (!setDificuldade) {
+                highCap = 30;
+                lowCap = 10;
+            }
+            gameReset();
+        } else if (!START && binding.equals("Melhores")) {
+            Iterator iterator = map.entrySet().iterator();
+            Integer o = 0;
+            String b = "\tMelhores\n\n";
+            while(iterator.hasNext()){
+                if(o++ == 3)
+                    break;
+                Map.Entry entry = (Map.Entry) iterator.next();
+                b += entry.getValue() + ": " + entry.getKey() + "\n";
+            }
+            loadText(pressStart, b + "Voltar (Pressione V)", defaultFont, 230, 170, 0);
         }
     }
 
